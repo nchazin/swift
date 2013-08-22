@@ -255,7 +255,8 @@ class TempURL(object):
         """
         if env['REQUEST_METHOD'] == 'OPTIONS':
             return self.app(env, start_response)
-        temp_url_sig, temp_url_expires, filename = self._get_temp_url_info(env)
+        temp_url_sig, temp_url_expires, filename, dont_save = \
+            self._get_temp_url_info(env)
         if temp_url_sig is None and temp_url_expires is None:
             return self.app(env, start_response)
         if not temp_url_sig or not temp_url_expires:
@@ -300,7 +301,7 @@ class TempURL(object):
                     headers = list((h, v) for h, v in headers
                                    if h.lower() != 'content-disposition')
                     already = False
-                if not already:
+                if not already and not dont_save:
                     name = filename or basename(env['PATH_INFO'].rstrip('/'))
                     headers.append((
                         'Content-Disposition',
@@ -338,7 +339,7 @@ class TempURL(object):
         :param env: The WSGI environment for the request.
         :returns: (sig, expires) as described above.
         """
-        temp_url_sig = temp_url_expires = filename = None
+        temp_url_sig = temp_url_expires = filename = dont_save = None
         qs = parse_qs(env.get('QUERY_STRING', ''))
         if 'temp_url_sig' in qs:
             temp_url_sig = qs['temp_url_sig'][0]
@@ -351,7 +352,9 @@ class TempURL(object):
                 temp_url_expires = 0
         if 'filename' in qs:
             filename = qs['filename'][0]
-        return temp_url_sig, temp_url_expires, filename
+        if 'dont_save' in qs:
+            dont_save = True
+        return temp_url_sig, temp_url_expires, filename, dont_save
 
     def _get_keys(self, env, account):
         """
