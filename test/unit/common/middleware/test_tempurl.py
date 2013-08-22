@@ -574,21 +574,27 @@ class TestTempURL(unittest.TestCase):
         s = 'f5d5051bddf5df7e27c628818738334f'
         e = int(time() + 86400)
         self.assertEquals(self.tempurl._get_temp_url_info({'QUERY_STRING':
-            'temp_url_sig=%s&temp_url_expires=%s' % (s, e)}), (s, e, None))
+            'temp_url_sig=%s&temp_url_expires=%s&' % (s, e)}), (s, e, None, None))
         self.assertEquals(self.tempurl._get_temp_url_info({
             'QUERY_STRING': 'temp_url_sig=%s&temp_url_expires=%s&'
-            'filename=bobisyouruncle' % (s, e)}), (s, e, 'bobisyouruncle'))
+            'filename=bobisyouruncle' % (s, e)}), (s, e, 'bobisyouruncle', None))
+        self.assertEquals(self.tempurl._get_temp_url_info({
+            'QUERY_STRING': 'temp_url_sig=%s&temp_url_expires=%s&' 
+            'filename=bobisyouruncle&dont_save=true' % (s, e)}), 
+                         (s, e, 'bobisyouruncle',  True))
         self.assertEquals(self.tempurl._get_temp_url_info({}),
-                          (None, None, None))
+                          (None, None, None, None))
         self.assertEquals(self.tempurl._get_temp_url_info({'QUERY_STRING':
-            'temp_url_expires=%s' % e}), (None, e, None))
+            'temp_url_expires=%s' % e}), (None, e, None, None))
         self.assertEquals(self.tempurl._get_temp_url_info({'QUERY_STRING':
-            'temp_url_sig=%s' % s}), (s, None, None))
+            'temp_url_sig=%s' % s}), (s, None, None, None))
         self.assertEquals(self.tempurl._get_temp_url_info({'QUERY_STRING':
-            'temp_url_sig=%s&temp_url_expires=bad' % s}), (s, 0, None))
+            'dont_save=true'}), (None, None, None, True))
+        self.assertEquals(self.tempurl._get_temp_url_info({'QUERY_STRING':
+            'temp_url_sig=%s&temp_url_expires=bad' % s}), (s, 0, None, None))
         e = int(time() - 1)
         self.assertEquals(self.tempurl._get_temp_url_info({'QUERY_STRING':
-            'temp_url_sig=%s&temp_url_expires=%s' % (s, e)}), (s, 0, None))
+            'temp_url_sig=%s&temp_url_expires=%s' % (s, e)}), (s, 0, None, None))
 
     def test_get_hmac(self):
         self.assertEquals(self.tempurl._get_hmac(
